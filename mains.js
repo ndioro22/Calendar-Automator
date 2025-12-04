@@ -1,6 +1,6 @@
 let rowCount = 1;
 
-// Drag and drop functionality for ranking
+// Drag and drop functionality
 const rankingContainer = document.getElementById('rankingContainer');
 let draggedItem = null;
 
@@ -14,7 +14,6 @@ rankingContainer.addEventListener('dragstart', (e) => {
 rankingContainer.addEventListener('dragend', (e) => {
     if (e.target.classList.contains('ranking-item')) {
         e.target.classList.remove('dragging');
-        updateRankNumbers();
     }
 });
 
@@ -43,11 +42,7 @@ function getDragAfterElement(container, y) {
     }, { offset: Number.NEGATIVE_INFINITY }).element;
 }
 
-function updateRankNumbers() {
-    // Rank numbers removed - no longer needed
-}
-
-// Course table functions
+// Table functions
 function addRow() {
     rowCount++;
     const tableBody = document.getElementById('courseTableBody');
@@ -75,12 +70,8 @@ function addRow() {
                 <option value="others">Others</option>
             </select>
         </td>
-        <td>
-            <input type="text" placeholder="">
-        </td>
-        <td>
-            <input type="text" placeholder="">
-        </td>
+        <td><input type="text" placeholder=""></td>
+        <td><input type="text" placeholder=""></td>
         <td>
             <select>
                 <option value="" selected></option>
@@ -120,3 +111,105 @@ function updateRowNumbers() {
         row.cells[0].textContent = index + 1;
     });
 }
+
+// Collect form data
+function collectFormData() {
+    const surveyData = {
+        year: document.getElementById('year').value,
+        major: document.getElementById('major').value,
+        workInGroup: document.getElementById('workInGroup').value,
+        workLocation: document.getElementById('workLocation').value,
+        preferredWorkingTime: getWorkingTimeRanking()
+    };
+
+    const courses = [];
+    const rows = document.querySelectorAll('#courseTableBody tr');
+    rows.forEach((row, index) => {
+        const cells = row.cells;
+        const course = {
+            number: index + 1,
+            type: cells[1].querySelector('select').value,
+            classMajor: cells[2].querySelector('select').value,
+            className: cells[3].querySelector('input').value,
+            assignmentName: cells[4].querySelector('input').value,
+            sessions: cells[5].querySelector('select').value,
+            resources: cells[6].querySelector('select').value
+        };
+        courses.push(course);
+    });
+
+    return {
+        survey: surveyData,
+        courses: courses
+    };
+}
+
+function getWorkingTimeRanking() {
+    const rankingItems = document.querySelectorAll('#rankingContainer .ranking-item');
+    const ranking = [];
+    rankingItems.forEach((item, index) => {
+        ranking.push({
+            rank: index + 1,
+            time: item.getAttribute('data-time')
+        });
+    });
+    return ranking;
+}
+
+// Submit handler
+document.querySelector('.submit-btn').addEventListener('click', async function() {
+    const button = this;
+    const originalText = button.textContent;
+    button.textContent = 'Generating... ⏳';
+    button.disabled = true;
+
+    try {
+        const formData = new FormData();
+        const jsonData = collectFormData();
+        formData.append('data', JSON.stringify(jsonData));
+
+        // Add PDFs
+        const pdfFiles = document.getElementById('pdfUpload').files;
+        for (let i = 0; i < pdfFiles.length; i++) {
+            formData.append('pdfs', pdfFiles[i]);
+        }
+
+        // Add ICS
+        const icsFile = document.getElementById('icsUpload').files[0];
+        if (icsFile) {
+            formData.append('ics', icsFile);
+        }
+
+        // Send to backend
+        const response = await fetch('/api/generate-schedule', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Server responded with: ' + response.status);
+        }
+
+        const result = await response.json();
+        
+        // Show success message
+        let message = '✅ Schedule Generated Successfully!\n\n';
+        message += `📊 Survey Data Received\n`;
+        message += `📚 Courses Processed: ${result.courses_count}\n`;
+        message += `📄 PDFs Analyzed: ${result.pdfs_processed}\n`;
+        message += `📅 Calendar Events: ${result.calendar_events_count}\n`;
+        
+        alert(message);
+        
+        console.log('Full Response:', result);
+        
+        button.textContent = originalText;
+        button.disabled = false;
+
+    } catch (error) {
+        console.error('Error:', error);
+        alert('❌ Error: ' + error.message + '\n\nMake sure the Flask server is running on port 5001');
+        button.textContent = originalText;
+        button.disabled = false;
+    }
+});
