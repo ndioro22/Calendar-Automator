@@ -35,6 +35,7 @@ except ImportError:
 # ============================================
 
 # Add this near the top
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 template_dir = os.path.join(BASE_DIR, 'templates')
 static_dir = os.path.join(BASE_DIR, 'static')
 
@@ -43,7 +44,7 @@ app = Flask(__name__, template_folder=template_dir, static_folder=static_dir)
 CORS(app)
 
 # Directory Setup
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 DATA_FOLDER = os.path.join(BASE_DIR, 'data')
 
