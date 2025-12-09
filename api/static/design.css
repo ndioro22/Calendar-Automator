@@ -1,90 +1,104 @@
-/* ... existing variables ... */
 :root {
-  /* Pastel Palette */
-  --bg-dark: #f0f4f8; 
-  --bg-panel: #ffffff; 
-  --bg-input: #eef2ff; 
-  --primary-gradient: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%); 
-  --glow: 0 0 15px rgba(167, 139, 250, 0.3);
-  --border-color: #d1d5db; 
-  --text-main: #1f2937; 
-  --text-muted: #6b7280; 
-  --radius: 12px;
-  --accent-purple: #a78bfa;
-  --accent-cyan: #4ade80; 
+  /* --- Retro Palette --- */
+  --retro-bg: #FFF8E7;        /* Warm Cream */
+  --card-bg: #FFFEF9;         
+  --body-bg: #E8DCC4;         /* Tan/Beige */
+  --grid-line: #D4C5A9;       
+  --retro-ink: #2C1810;       
+  --accent-primary: #8B7355;  
+  --accent-secondary: #C57B72;
+  --accent-cyan: #10b981; /* Success Green */
+  
+  --font-header: 'Space Mono', monospace;
+  --font-body: 'Karla', sans-serif;
 }
-
-/* ... Keep previous body, container, h1, h2, subtitle, section styles ... */
 
 body {
-  background-color: var(--bg-dark);
-  color: var(--text-main);
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--body-bg);
+  color: var(--retro-ink);
+  font-family: var(--font-body);
   margin: 0;
   padding: 40px 20px;
+  background-image: 
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 20px 20px;
 }
 
-.container { max-width: 960px; margin: 0 auto; }
-h1 {
-  font-size: 3rem; font-weight: 800; text-align: center;
-  background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  margin-bottom: 10px; letter-spacing: -1px;
+.retro-container { max-width: 800px; margin: 0 auto; }
+
+/* Header */
+.retro-header-section {
+    display: flex; justify-content: space-between; align-items: flex-end;
+    margin-bottom: 40px; border-bottom: 3px solid var(--retro-ink); padding-bottom: 10px;
 }
-h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
-h2::before { content: ''; display: block; width: 4px; height: 20px; background: var(--primary-gradient); border-radius: 2px; }
-.subtitle { text-align: center; color: var(--text-muted); margin-bottom: 40px; font-size: 1.1rem; }
-.section { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); }
-
-/* Inputs */
-.field { margin-bottom: 20px; }
-.field label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
-
-input[type="text"], input[type="number"], input[type="time"], input[type="datetime-local"], select {
-  width: 100%;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  color: var(--text-main);
-  padding: 12px 16px;
-  border-radius: 8px;
-  font-size: 1rem;
-  transition: all 0.2s ease;
-  box-sizing: border-box; /* Ensures padding doesn't break width */
+.header-text h1 { font-family: var(--font-header); font-size: 2.5rem; margin: 0; letter-spacing: -1px; }
+.header-text .subtitle { font-family: var(--font-header); margin: 5px 0 0 0; opacity: 0.7; }
+.retro-star-badge {
+    width: 60px; height: 60px; background: var(--retro-ink); color: var(--retro-bg);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-header); font-weight: bold; transform: rotate(15deg);
 }
 
-/* Prediction Result Box */
-.prediction-box {
-  animation: fadeIn 0.5s ease;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+/* Cards */
+.retro-card {
+    background: var(--card-bg);
+    border: 2px solid var(--retro-ink);
+    box-shadow: 6px 6px 0px var(--accent-primary);
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 30px;
+    position: relative;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(-5px); }
-  to { opacity: 1; transform: translateY(0); }
+.card-header-pill {
+    position: absolute; top: -12px; left: 20px;
+    background: var(--retro-ink); color: var(--retro-bg);
+    padding: 4px 12px; font-family: var(--font-header); font-size: 0.8rem;
+    border-radius: 20px; text-transform: uppercase;
 }
 
-/* ... Keep Grid, Dynamic Card, Syllabus Row, Button styles ... */
+/* Grids & Inputs */
 .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+.schedule-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
 
-.dynamic-card {
-  background: var(--bg-input); border: 1px solid var(--border-color);
-  padding: 20px; border-radius: var(--radius); margin-bottom: 20px;
-  transition: transform 0.2s;
+.field label { display: block; font-weight: 700; margin-bottom: 8px; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+select, input[type="text"], input[type="date"], input[type="file"] {
+    width: 100%; padding: 10px;
+    background: transparent; border: 2px solid var(--grid-line);
+    border-radius: 4px; font-family: var(--font-body); font-size: 1rem;
+    color: var(--retro-ink); box-sizing: border-box;
 }
-.dynamic-card:hover { border-color: var(--accent-purple); }
+select:focus, input:focus { outline: none; border-color: var(--retro-ink); }
 
-.syllabus-row { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; }
+/* Time Pickers */
+.time-picker { display: flex; align-items: center; }
+.time-picker select { flex: 1; text-align: center; }
 
-.btn { border: none; border-radius: 8px; font-weight: 600; cursor: pointer; padding: 12px 20px; font-size: 1rem; transition: all 0.2s; }
-.btn-primary { width: 100%; background: var(--primary-gradient); color: white; box-shadow: var(--glow); }
-.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
-.btn-secondary { width: 100%; background: #e5e7eb; color: var(--text-main); border: 1px solid var(--border-color); }
-.btn-secondary:hover { background: #d1d5db; }
-.btn-delete { background: transparent; color: #f87171; font-size: 0.9rem; padding: 5px 10px; }
+/* Buttons */
+.btn {
+    width: 100%; padding: 15px; border: 2px solid var(--retro-ink);
+    font-family: var(--font-header); font-weight: bold; font-size: 1rem;
+    cursor: pointer; transition: all 0.2s; text-transform: uppercase;
+}
+.btn-primary { background: var(--retro-ink); color: var(--retro-bg); box-shadow: 4px 4px 0px rgba(0,0,0,0.2); }
+.btn-primary:active { transform: translate(2px, 2px); box-shadow: 2px 2px 0px rgba(0,0,0,0.2); }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .grid-2, .grid-3 { grid-template-columns: 1fr; }
-  .syllabus-row { flex-direction: column; align-items: stretch; }
-  h1 { font-size: 2rem; }
+.btn-dashed { background: transparent; border-style: dashed; color: var(--retro-ink); margin-top: 15px; }
+.btn-dashed:hover { background: rgba(0,0,0,0.05); }
+
+/* Assignment Row */
+.syllabus-row {
+    display: flex; gap: 10px; align-items: flex-end;
+    padding: 10px; border-bottom: 1px solid var(--grid-line);
+    margin-bottom: 10px;
+}
+.btn-delete {
+    background: none; border: none; font-size: 1.5rem; color: var(--accent-secondary);
+    cursor: pointer; line-height: 1;
+}
+
+@media (max-width: 600px) {
+    .grid-2, .schedule-grid { grid-template-columns: 1fr; }
 }
