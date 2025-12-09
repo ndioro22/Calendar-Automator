@@ -2,7 +2,7 @@
 document.getElementById('submitBtn').addEventListener('click', async () => {
     const btn = document.getElementById('submitBtn');
     const originalText = btn.textContent;
-    btn.textContent = "Processing...";
+    btn.textContent = "Processing AI Models...";
     btn.disabled = true;
 
     // 1. Survey Data
@@ -19,7 +19,7 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
         weekendEnd: document.getElementById('weekendEnd').value
     };
 
-    // 3. Assignments
+    // 3. Manual Courses
     const courses = [];
     document.querySelectorAll('.dynamic-card').forEach(card => {
         courses.push({
@@ -56,8 +56,9 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
         const result = await response.json();
 
         if (response.ok) {
-            btn.textContent = "Done!";
+            btn.textContent = "Complete!";
             
+            // Show Download Button
             if (result.ics_url) {
                 const area = document.getElementById('resultArea');
                 const link = document.getElementById('downloadLink');
@@ -65,7 +66,8 @@ document.getElementById('submitBtn').addEventListener('click', async () => {
                 link.href = result.ics_url;
                 link.download = "My_Study_Schedule.ics";
             }
-            alert(`Scheduled ${result.courses.length} items!`);
+            
+            alert(`Optimized ${result.courses.length} assignments!`);
         } else {
             alert("Error: " + (result.error || "Unknown"));
         }
