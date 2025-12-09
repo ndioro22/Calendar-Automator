@@ -1,4 +1,14 @@
 {
+  "functions": {
+    "api/index.py": {
+      "maxDuration": 10,
+      "includeFiles": [
+        "api/survey_data.csv",
+        "api/templates/**",
+        "api/static/**"
+      ]
+    }
+  },
   "rewrites": [
     { "source": "/(.*)", "destination": "/api/index.py" }
   ]
