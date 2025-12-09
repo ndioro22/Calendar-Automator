@@ -4,6 +4,8 @@ import time
 import re
 import sys
 import math
+import pandas as pd
+import numpy as np
 from datetime import datetime, timedelta, time as dt_time
 from typing import List, Optional
 from zoneinfo import ZoneInfo
@@ -12,15 +14,8 @@ from flask import Flask, request, jsonify, render_template, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
-# --- DEFENSIVE IMPORTS (Prevents Crash on Startup) ---
+# --- DEFENSIVE IMPORTS ---
 errors = []
-
-try:
-    import pandas as pd
-    import numpy as np
-except ImportError as e:
-    pd = None
-    errors.append(f"Pandas/Numpy missing: {e}")
 
 try:
     from sklearn.linear_model import ElasticNet
@@ -34,7 +29,7 @@ try:
     from pydantic import BaseModel, Field
 except ImportError as e:
     genai = None
-    BaseModel = object # Dummy
+    BaseModel = object 
     errors.append(f"Google GenAI missing: {e}")
 
 try:
@@ -73,7 +68,7 @@ LOCAL_TZ = ZoneInfo("America/New_York")
 CHUNK_SIZE = 60 
 
 # ============================================
-# 2. DATA MODELS (Safe Definition)
+# 2. DATA MODELS
 # ============================================
 
 if genai:
@@ -118,7 +113,7 @@ def map_pdf_category(cat):
 # ============================================
 
 def parse_user_ics_busy_times(ics_path, start_date, end_date):
-    if not ICalLoader: return [] # Safety check
+    if not ICalLoader: return [] 
     busy = []
     if not ics_path or not os.path.exists(ics_path):
         return busy
@@ -132,8 +127,7 @@ def parse_user_ics_busy_times(ics_path, start_date, end_date):
             dtstart = ev.get('DTSTART').dt
             dtend = ev.get('DTEND').dt
             
-            # Normalize to datetime with timezone
-            if not isinstance(dtstart, datetime): # Is pure date
+            if not isinstance(dtstart, datetime): 
                 dtstart = datetime.combine(dtstart, dt_time.min).replace(tzinfo=LOCAL_TZ)
             if not isinstance(dtend, datetime):
                 dtend = datetime.combine(dtend, dt_time.max).replace(tzinfo=LOCAL_TZ)
@@ -151,7 +145,7 @@ def parse_user_ics_busy_times(ics_path, start_date, end_date):
     return busy
 
 def generate_free_blocks(start_date, end_date, preferences, busy_blocks):
-    if pd is None: return [] # Safety check
+    if 'pandas' not in sys.modules: return pd.DataFrame()
     
     free_blocks = []
     current_day = start_date.date()
@@ -201,13 +195,12 @@ def generate_free_blocks(start_date, end_date, preferences, busy_blocks):
     return pd.DataFrame(free_blocks)
 
 def run_scheduler_logic(courses, preferences, user_ics_path, output_filename):
-    if not IcsCalendar or pd is None:
-        return None # Libs missing
+    if not IcsCalendar or 'pandas' not in sys.modules:
+        return None 
 
     now = datetime.now(LOCAL_TZ)
     end_horizon = now + timedelta(days=90)
 
-    # 1. Get Free Time
     busy = parse_user_ics_busy_times(user_ics_path, now, end_horizon)
     free_df = generate_free_blocks(now, end_horizon, preferences, busy)
 
@@ -215,7 +208,6 @@ def run_scheduler_logic(courses, preferences, user_ics_path, output_filename):
         print("Scheduler: No free time found.")
         return None
 
-    # 2. Prepare Sessions
     sessions = []
     for c in courses:
         try:
@@ -244,7 +236,6 @@ def run_scheduler_logic(courses, preferences, user_ics_path, output_filename):
 
     sessions.sort(key=lambda x: x['due'])
 
-    # 3. Allocate
     scheduled_events = []
     for sess in sessions:
         valid = free_df[
@@ -275,7 +266,6 @@ def run_scheduler_logic(courses, preferences, user_ics_path, output_filename):
             else:
                 free_df.drop(idx, inplace=True)
 
-    # 4. Generate ICS
     cal = IcsCalendar()
     for ev in scheduled_events:
         e = IcsEvent()
@@ -324,7 +314,7 @@ model = None
 model_columns = []
 def initialize_model():
     global model, model_columns
-    if not ElasticNet or not pd: return # Safety check
+    if not ElasticNet or 'pandas' not in sys.modules: return
     
     if not os.path.exists(CSV_PATH):
         print(f"CSV Not Found at {CSV_PATH}")
@@ -353,7 +343,6 @@ initialize_model()
 
 @app.route('/', methods=['GET'])
 def home():
-    # DIAGNOSTIC HOME PAGE - Shows exactly what is missing
     return jsonify({
         "status": "Online", 
         "errors": errors, 
