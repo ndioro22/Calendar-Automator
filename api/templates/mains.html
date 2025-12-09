@@ -20,6 +20,8 @@
                     <select id="studentYear">
                         <option value="2026">2026</option>
                         <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                        <option value="2029">2029</option>
                     </select>
                 </div>
                 <div class="field">
@@ -27,17 +29,18 @@
                     <select id="major" class="major-select">
                         <option value="Computer Science">Computer Science</option>
                         <option value="Business">Business</option>
+                        <option value="Engineering">Engineering</option>
                     </select>
                 </div>
             </div>
 
-            <h3 style="margin-top:20px;">Preferred Work Windows</h3>
+            <h3 style="margin-top:20px; font-size:1.1rem; color:#4b5563;">Preferred Work Windows</h3>
             <div class="grid-2">
                 <div class="field">
                     <label>Weekdays (Start - End)</label>
                     <div style="display:flex; gap:10px;">
                         <input type="time" id="weekdayStart" value="09:00">
-                        <input type="time" id="weekdayEnd" value="22:00">
+                        <input type="time" id="weekdayEnd" value="21:00">
                     </div>
                 </div>
                 <div class="field">
@@ -72,10 +75,10 @@
 
         <button id="submitBtn" class="btn btn-primary">Generate Optimized Schedule</button>
         
-        <div id="resultArea" style="margin-top:30px; display:none; text-align:center; padding:20px; background:#f0fdf4; border-radius:12px;">
+        <div id="resultArea" style="margin-top:30px; display:none; text-align:center; padding:20px; background:#f0fdf4; border-radius:12px; border:1px solid #bbf7d0;">
             <h3 style="color:#166534;">Success!</h3>
-            <p>Your study plan has been generated.</p>
-            <a id="downloadLink" href="#" class="btn btn-primary" style="background:#10b981; display:inline-block; margin-top:10px;">Download Calendar (.ics)</a>
+            <p>Your study plan has been generated based on your workload and free time.</p>
+            <a id="downloadLink" href="#" class="btn btn-primary" style="background:#10b981; border:none; display:inline-block; margin-top:10px;">Download Calendar (.ics)</a>
         </div>
     </div>
 
