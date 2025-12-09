@@ -1,5 +1,17 @@
 {
-    "rewrites": [
-        { "source": "/(.*)", "destination": "/api/index.py" }
-    ]
+  "builds": [
+    {
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": {
+        "includeFiles": ["api/Student Assignment Survey v2 2.csv"]
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "api/index.py"
+    }
+  ]
 }
