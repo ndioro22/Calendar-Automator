@@ -1,6 +1,7 @@
 Flask
 flask-cors
 pandas
+numpy
 scikit-learn
 google-genai
 pydantic
