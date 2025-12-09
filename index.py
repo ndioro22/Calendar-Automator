@@ -29,13 +29,13 @@ from ics import Calendar as IcsCalendar, Event as IcsEvent
 
 # --- CONFIGURATION ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TEMPLATE_DIR = os.path.join(BASE_DIR, 'templates')
 STATIC_DIR = os.path.join(BASE_DIR, 'static')
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
+CSV_PATH = os.path.join(BASE_DIR, 'survey.csv')
 
 # Initialize App
-app = Flask(__name__, 
-            template_folder=os.path.join(BASE_DIR, 'templates'), 
-            static_folder=STATIC_DIR)
+app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
 CORS(app)
 
 # WhiteNoise (Static file serving)
@@ -47,13 +47,12 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024  # 32MB limit
 
 # Constants
-CSV_PATH = os.path.join(BASE_DIR, 'survey.csv')
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 LOCAL_TZ = ZoneInfo("America/New_York")
 CHUNK_SIZE = 60
 
 # ==========================================
-# 1. SCHEDULER LOGIC (Integrated v2.0)
+# 1. SCHEDULER LOGIC
 # ==========================================
 
 def parse_user_ics_busy_times(ics_path, start_date, end_date):
@@ -296,9 +295,11 @@ def parse_syllabus(file_path):
 
         client = genai.Client(api_key=GEMINI_API_KEY)
         file_upload = client.files.upload(file=file_path)
+        
         while file_upload.state.name == "PROCESSING":
             time.sleep(1)
             file_upload = client.files.get(name=file_upload.name)
+        
         if file_upload.state.name != "ACTIVE": return None
 
         prompt = "Extract assignments (Dates YYYY-MM-DD), readings, and deliverables."
@@ -319,25 +320,53 @@ def parse_syllabus(file_path):
 
 model = None
 model_columns = []
+
 def initialize_model():
     global model, model_columns
-    if not ElasticNet or not os.path.exists(CSV_PATH): return
+    
+    # Skip if dependencies are missing or file doesn't exist
+    if not ElasticNet or not os.path.exists(CSV_PATH): 
+        print("Model initialization skipped (Missing sklearn or CSV).")
+        return
+
     try:
         df = pd.read_csv(CSV_PATH)
-        df = df.rename(columns={'What year are you? ': 'year', 'What is your major/concentration?': 'major', 'What type of assignment was it?': 'assignment_type', 'Approximately how long did it take (in hours)': 'time_spent_hours'})
-        for col in ['year', 'assignment_type', 'external_resources', 'work_location', 'worked_in_group', 'submitted_in_person']:
-            if col in df.columns: df = pd.get_dummies(df, columns=[col], prefix=col, dtype=int, drop_first=True)
+        
+        # Rename columns to match expected schema
+        df = df.rename(columns={
+            'What year are you? ': 'year', 
+            'What is your major/concentration?': 'major', 
+            'What type of assignment was it?': 'assignment_type', 
+            'Approximately how long did it take (in hours)': 'time_spent_hours'
+        })
+        
+        # One-Hot Encoding for categorical variables
+        categorical_cols = ['year', 'assignment_type', 'external_resources', 'work_location', 'worked_in_group', 'submitted_in_person']
+        for col in categorical_cols:
+            if col in df.columns: 
+                df = pd.get_dummies(df, columns=[col], prefix=col, dtype=int, drop_first=True)
+        
+        # Keep only numeric columns
         df = df.select_dtypes(include=[np.number])
+        
         if 'time_spent_hours' in df.columns:
             X = df.drop('time_spent_hours', axis=1)
             y = df['time_spent_hours']
+            
+            # Train ElasticNet Model
             clf = ElasticNet(alpha=0.078, l1_ratio=0.95, max_iter=5000)
             clf.fit(X, y)
+            
             model = clf
             model_columns = list(X.columns)
-            print("✅ Model Trained.")
-    except Exception as e: print(f"Training Failed: {e}")
+            print("✅ Model Trained successfully.")
+        else:
+            print("❌ Target column 'time_spent_hours' not found in CSV.")
+            
+    except Exception as e:
+        print(f"Training Failed: {e}")
 
+# Run initialization immediately
 initialize_model()
 
 # ==========================================
