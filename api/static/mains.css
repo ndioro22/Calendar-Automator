@@ -1,0 +1,90 @@
+/* ... existing variables ... */
+:root {
+  /* Pastel Palette */
+  --bg-dark: #f0f4f8; 
+  --bg-panel: #ffffff; 
+  --bg-input: #eef2ff; 
+  --primary-gradient: linear-gradient(135deg, #a78bfa 0%, #f472b6 100%); 
+  --glow: 0 0 15px rgba(167, 139, 250, 0.3);
+  --border-color: #d1d5db; 
+  --text-main: #1f2937; 
+  --text-muted: #6b7280; 
+  --radius: 12px;
+  --accent-purple: #a78bfa;
+  --accent-cyan: #4ade80; 
+}
+
+/* ... Keep previous body, container, h1, h2, subtitle, section styles ... */
+
+body {
+  background-color: var(--bg-dark);
+  color: var(--text-main);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  margin: 0;
+  padding: 40px 20px;
+}
+
+.container { max-width: 960px; margin: 0 auto; }
+h1 {
+  font-size: 3rem; font-weight: 800; text-align: center;
+  background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  margin-bottom: 10px; letter-spacing: -1px;
+}
+h2 { font-size: 1.2rem; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 10px; }
+h2::before { content: ''; display: block; width: 4px; height: 20px; background: var(--primary-gradient); border-radius: 2px; }
+.subtitle { text-align: center; color: var(--text-muted); margin-bottom: 40px; font-size: 1.1rem; }
+.section { background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 30px; margin-bottom: 30px; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05); }
+
+/* Inputs */
+.field { margin-bottom: 20px; }
+.field label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+
+input[type="text"], input[type="number"], input[type="time"], input[type="datetime-local"], select {
+  width: 100%;
+  background: var(--bg-input);
+  border: 1px solid var(--border-color);
+  color: var(--text-main);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  box-sizing: border-box; /* Ensures padding doesn't break width */
+}
+
+/* Prediction Result Box */
+.prediction-box {
+  animation: fadeIn 0.5s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ... Keep Grid, Dynamic Card, Syllabus Row, Button styles ... */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+
+.dynamic-card {
+  background: var(--bg-input); border: 1px solid var(--border-color);
+  padding: 20px; border-radius: var(--radius); margin-bottom: 20px;
+  transition: transform 0.2s;
+}
+.dynamic-card:hover { border-color: var(--accent-purple); }
+
+.syllabus-row { display: flex; gap: 15px; align-items: flex-end; margin-bottom: 15px; padding: 15px; background: #f8fafc; border-radius: 8px; }
+
+.btn { border: none; border-radius: 8px; font-weight: 600; cursor: pointer; padding: 12px 20px; font-size: 1rem; transition: all 0.2s; }
+.btn-primary { width: 100%; background: var(--primary-gradient); color: white; box-shadow: var(--glow); }
+.btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+.btn-secondary { width: 100%; background: #e5e7eb; color: var(--text-main); border: 1px solid var(--border-color); }
+.btn-secondary:hover { background: #d1d5db; }
+.btn-delete { background: transparent; color: #f87171; font-size: 0.9rem; padding: 5px 10px; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  .syllabus-row { flex-direction: column; align-items: stretch; }
+  h1 { font-size: 2rem; }
+}
