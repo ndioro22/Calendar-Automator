@@ -8,7 +8,7 @@ import numpy as np
 from datetime import datetime
 from typing import List, Optional
 
-from flask import Flask, request, jsonify, send_from_directory, sender_template
+from flask import Flask, request, jsonify, send_from_directory, render_template
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 
