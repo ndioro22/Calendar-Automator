@@ -22,14 +22,14 @@ STATIC_DIR = os.path.join(BASE_DIR, 'static')
 app = Flask(__name__, template_folder=TEMPLATE_DIR, static_folder=STATIC_DIR)
 CORS(app)
 
-# Folders for Railway (Ephemeral or Persisted)
+# Folders
 UPLOAD_FOLDER = os.path.join(BASE_DIR, 'uploads')
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['MAX_CONTENT_LENGTH'] = 32 * 1024 * 1024
 
-# Secrets & Data
+# Files & Secrets
 CSV_PATH = os.path.join(BASE_DIR, 'survey.csv')
 GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
 LOCAL_TZ = ZoneInfo("America/New_York") 
@@ -69,13 +69,14 @@ def parse_user_ics_busy_times(ics_path, start_date, end_date):
         with open(ics_path, 'rb') as f:
             cal = ICalLoader.from_ical(f.read())
         
+        # Get events within window
         events = recurring_ical_events.of(cal).between(start_date, end_date)
         for ev in events:
             dtstart = ev.get('DTSTART').dt
             dtend = ev.get('DTEND').dt
             
-            # Normalize to datetime with timezone
-            if not isinstance(dtstart, datetime): # Handle dates
+            # Normalize to datetime (handle all-day events which are dates)
+            if not isinstance(dtstart, datetime): 
                 dtstart = datetime.combine(dtstart, dt_time.min).replace(tzinfo=LOCAL_TZ)
             if not isinstance(dtend, datetime):
                 dtend = datetime.combine(dtend, dt_time.max).replace(tzinfo=LOCAL_TZ)
@@ -99,6 +100,7 @@ def generate_free_blocks(start_date, end_date, preferences, busy_blocks):
     current_day = start_date.date()
     end_date_date = end_date.date()
     
+    # Sort busy blocks
     busy_blocks.sort(key=lambda x: x[0])
 
     while current_day <= end_date_date:
@@ -112,6 +114,7 @@ def generate_free_blocks(start_date, end_date, preferences, busy_blocks):
             s_str = preferences.get('weekdayStart', '09:00')
             e_str = preferences.get('weekdayEnd', '22:00')
 
+        # Parse times
         try:
             sh, sm = map(int, s_str.split(':'))
             eh, em = map(int, e_str.split(':'))
@@ -164,7 +167,7 @@ def run_scheduler_logic(courses, preferences, user_ics_path, output_filename):
         print("Scheduler: No free time found.")
         return None
 
-    # 2. Prepare Sessions (Break assignments into chunks)
+    # 2. Prepare Sessions (Break assignments into chunks based on predicted hours)
     sessions = []
     for c in courses:
         try:
@@ -179,7 +182,7 @@ def run_scheduler_logic(courses, preferences, user_ics_path, output_filename):
                 
             due_dt = due_dt.replace(hour=23, minute=59) # End of due day
 
-            # Get Predicted Hours
+            # Get Predicted Hours from ML Model
             hours = float(c.get('predicted_hours', 1.0))
             if hours <= 0: hours = 0.5
 
@@ -256,6 +259,7 @@ def run_scheduler_logic(courses, preferences, user_ics_path, output_filename):
 
 def standardize_time(time_str):
     if not time_str: return None
+    import re
     clean = re.split(r'\s*[-–]\s*|\s+to\s+', str(time_str))[0].strip()
     for fmt in ["%I:%M %p", "%I %p", "%H:%M", "%I:%M%p"]:
         try: return datetime.strptime(clean, fmt).strftime("%I:%M %p")
@@ -357,82 +361,4 @@ def generate_schedule():
         data_json = request.form.get('data')
         if not data_json: return jsonify({'error': 'No data'}), 400
         
-        data = json.loads(data_json)
-        survey = data.get('survey', {})
-        manual_courses = data.get('courses', [])
-        preferences = data.get('preferences', {}) 
-        
-        pdf_courses = []
-        user_ics_path = None
-
-        # 1. Handle PDFs
-        if 'pdfs' in request.files:
-            for f in request.files.getlist('pdfs'):
-                if f.filename:
-                    fname = secure_filename(f.filename)
-                    path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-                    f.save(path)
-                    if GEMINI_API_KEY:
-                        df = parse_syllabus(path)
-                        if df is not None:
-                            for _, r in df.iterrows():
-                                pdf_courses.append({'name': f"{r['Course']} - {r['Assignment']}", 'type': map_pdf_category(r['Category']), 'subject': survey.get('major'), 'resources': 'Google/internet', 'date': r['Date'], 'time': r['Time'], 'description': r['Description'], 'source': 'pdf_parser'})
-
-        # 2. Handle User ICS
-        if 'ics' in request.files:
-            f = request.files['ics']
-            if f.filename:
-                fname = secure_filename(f.filename)
-                user_ics_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-                f.save(user_ics_path)
-
-        # 3. Predict Hours
-        all_courses = manual_courses + pdf_courses
-        for course in all_courses:
-            predicted = 0.0
-            if model:
-                try:
-                    input_row = pd.DataFrame(0, index=[0], columns=model_columns)
-                    yr = f"year_{survey.get('year')}"
-                    if yr in input_row.columns: input_row[yr] = 1
-                    rt = course.get('type', '').lower()
-                    mt = 'p_set'
-                    if 'essay' in rt: mt = 'essay'
-                    elif 'coding' in rt: mt = 'coding'
-                    elif 'read' in rt: mt = 'readings'
-                    ty = f"assignment_type_{mt}"
-                    if ty in input_row.columns: input_row[ty] = 1
-                    predicted = float(model.predict(input_row)[0])
-                except: pass
-            course['predicted_hours'] = max(0.5, round(predicted, 2))
-
-        # 4. Run Scheduler Logic
-        output_ics = f"study_plan_{int(time.time())}.ics"
-        output_path = os.path.join(app.config['UPLOAD_FOLDER'], output_ics)
-        
-        generated_file = run_scheduler_logic(
-            courses=all_courses,
-            preferences=preferences,
-            user_ics_path=user_ics_path,
-            output_filename=output_ics
-        )
-
-        response = {
-            "status": "success",
-            "courses": all_courses,
-            "parsed_count": len(pdf_courses)
-        }
-        
-        if generated_file:
-            response["ics_url"] = f"/download/{output_ics}"
-        else:
-            response["warning"] = "Could not generate schedule (no free time or parsing error)"
-
-        return jsonify(response)
-
-    except Exception as e:
-        print(f"Error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=int(os.environ.get("PORT", 5000)))
+        data = json.
