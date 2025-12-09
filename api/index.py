@@ -47,24 +47,16 @@ model_cache = {
 # ============================================
 
 def get_lazy_imports():
-    """Imports heavy libraries only when needed."""
-    try:
         import pandas as pd
         import numpy as np
         from sklearn.linear_model import ElasticNet
         return pd, np, ElasticNet, None
-    except ImportError as e:
-        return None, None, None, str(e)
 
 def get_genai_imports():
-    """Imports Gemini libs only when needed."""
-    try:
         from google import genai
         from google.genai import types
         from pydantic import BaseModel, Field
         return genai, types, BaseModel, Field, None
-    except ImportError as e:
-        return None, None, None, None, str(e)
 
 def train_model_lazy():
     """Loads CSV and trains model ONLY if not already done."""
